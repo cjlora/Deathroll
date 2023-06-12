@@ -5,6 +5,8 @@ from PIL import ImageTk, Image
 import time
 import _thread
 import pygame
+from sys import exit
+
 
 class gifplay:
     def __init__(self,label,giffile,delay):
@@ -39,13 +41,25 @@ class gifplay:
 class DeathRoll(Frame):
     def __init__(self, window):
         Frame.__init__(self, window)
-
         container = window
         container.resizable(width=FALSE, height=FALSE)
         container.columnconfigure(0, weight=1)
         container.rowconfigure(0, weight=1) 
         container.grid_rowconfigure(0, weight = 1)
         container.grid_columnconfigure(0, weight = 1)
+
+        pygame.mixer.init()
+        self.tankmusic = pygame.mixer.Sound('C:/deathroll/music/tank.wav')
+        self.roguemusic = pygame.mixer.Sound('C:/deathroll/music/rogue.wav')
+        self.archermusic = pygame.mixer.Sound('C:/deathroll/music/archer.wav')
+        self.healermusic = pygame.mixer.Sound('C:/deathroll/music/healer.wav')
+        self.readymusic = pygame.mixer.Sound('C:/deathroll/music/readyus.wav')
+        self.lang = 0
+
+
+        pygame.mixer.music.load('C:/deathroll/music/bg.mp3')
+        pygame.mixer.music.set_volume(0.1)
+        pygame.mixer.music.play(-1)
 
         self.tank = StringVar()
         self.rogue = StringVar()
@@ -86,33 +100,61 @@ class DeathRoll(Frame):
 
 class StartPage(Frame):
     def __init__(self, parent, controller):
-        Frame.__init__(self, parent)
-        '''
-        mainimg = ImageTk.PhotoImage(file = "C:/Users/cjlor/python/deathroll/pictures/main.png") 
-        mainlbl = Label(self, image = mainimg)
-        mainlbl.image = mainimg
-        mainlbl.place(x = 0, y = 0)
-        '''
+        def changeLanguage(number):
+            if number == 0:
+                language.configure(image = phimg)
+                language.image = phimg
+                controller.tankmusic = pygame.mixer.Sound('C:/deathroll/music/tankph.wav')
+                controller.roguemusic = pygame.mixer.Sound('C:/deathroll/music/rogueph.wav')
+                controller.archermusic = pygame.mixer.Sound('C:/deathroll/music/archerph.wav')
+                controller.healermusic = pygame.mixer.Sound('C:/deathroll/music/healerph.wav')
+                controller.readymusic = pygame.mixer.Sound('C:/deathroll/music/readyph.wav')
+                phlang = pygame.mixer.Sound('C:/deathroll/music/langph.wav')
+                phlang.play()
+                controller.lang = 1
+            elif number == 1:
+                language.configure(image = usimg)
+                language.image = usimg
+                controller.tankmusic = pygame.mixer.Sound('C:/deathroll/music/tank.wav')
+                controller.roguemusic = pygame.mixer.Sound('C:/deathroll/music/rogue.wav')
+                controller.archermusic = pygame.mixer.Sound('C:/deathroll/music/archer.wav')
+                controller.healermusic = pygame.mixer.Sound('C:/deathroll/music/healer.wav')
+                controller.readymusic = pygame.mixer.Sound('C:/deathroll/music/readyus.wav')
+                uslang = pygame.mixer.Sound('C:/deathroll/music/langus.wav')
+                uslang.play()
+                controller.lang = 0
 
-        
+        Frame.__init__(self, parent)
         
         mainlbl = Label(self)
         mainlbl.place(x = 0, y = 0)
-        gif = gifplay(mainlbl,'C:/Users/cjlor/python/deathroll/pictures/main.gif',0.005)
+        gif = gifplay(mainlbl, 'C:/deathroll/pictures/main.gif', 0.005)
         gif.play()
 
-        pygame.init()
-        pygame.mixer.music.load('C:/Users/cjlor/python/deathroll/music/bg.mp3')
-        pygame.mixer.music.play(-1)
+        try:
+            pygame.init()
+        except:
+            pass
 
-        playimg = ImageTk.PhotoImage(file = "C:/Users/cjlor/python/deathroll/pictures/play.png")
+        playimg = ImageTk.PhotoImage(file = "C:/deathroll/pictures/play.png")
         play = Button(self, bg = 'brown', image = playimg, command = lambda: controller.player_screen(parent))
         play.image = playimg
         play.place(x = 380, y = 400)
-        regimg = ImageTk.PhotoImage(file = "C:/Users/cjlor/python/deathroll/pictures/register.png")
+        regimg = ImageTk.PhotoImage(file = "C:/deathroll/pictures/register.png")
         register = Button(self, bg = 'brown', image = regimg, command = lambda: Bank())
         register.image = regimg
-        register.place(x = 380, y = 550)
+        register.place(x = 380, y = 530)
+        mquitimg = ImageTk.PhotoImage(file = "C:/deathroll/pictures/mquit.png")
+        mquit = Button(self, bg = 'brown', image = mquitimg, command = lambda: exit())
+        mquit.image = mquitimg
+        mquit.place(x = 505, y = 530)
+
+        usimg = ImageTk.PhotoImage(file = "C:/deathroll/pictures/us.png")
+        phimg = ImageTk.PhotoImage(file = "C:/deathroll/pictures/ph.png")
+        language = Button(self, bg = 'brown', image = usimg, command = lambda: changeLanguage(controller.lang))
+        language.image = usimg
+        language.place(x = 630, y = 548)
+
 
 class PlayerCreation(Frame):
     def __init__(self, parent, controller):
@@ -127,7 +169,7 @@ class PlayerCreation(Frame):
             controller.players.append(str(controller.archer.get()))
             controller.players.append(str(controller.healer.get()))
 
-            conn = sqlite3.connect("C:/Users/cjlor/python/deathroll/components/players.db")
+            conn = sqlite3.connect("C:/deathroll/components/players.db")
             c = conn.cursor()
 
             sql = "SELECT * FROM players"
@@ -142,6 +184,8 @@ class PlayerCreation(Frame):
             conn.close()
 
             if ineligible == '':
+                shuffle(controller.players)
+                controller.readymusic.play()
                 controller.game_screen(parent)
             else:
                 notif = Toplevel()
@@ -154,59 +198,77 @@ class PlayerCreation(Frame):
             
         Frame.__init__(self, parent)
 
-        logoimg = ImageTk.PhotoImage(file = "C:/Users/cjlor/python/deathroll/pictures/logo.png") 
+        backimg = ImageTk.PhotoImage(file = "C:/deathroll/pictures/back.png")
+        back = Button(self, image = backimg, command = lambda: controller.show_frame(StartPage))
+        back.image = backimg
+        back.place(x = 0, y = 0)
+
+        logoimg = ImageTk.PhotoImage(file = "C:/deathroll/pictures/logo.png") 
         logo = Label(self, image = logoimg)
         logo.image = logoimg
         logo.pack()
 
-        tankimg = ImageTk.PhotoImage(file = "C:/Users/cjlor/python/deathroll/pictures/tank.png")
-        rogueimg = ImageTk.PhotoImage(file = "C:/Users/cjlor/python/deathroll/pictures/rogue.png")
-        archerimg = ImageTk.PhotoImage(file = "C:/Users/cjlor/python/deathroll/pictures/archer.png")
-        healerimg = ImageTk.PhotoImage(file = "C:/Users/cjlor/python/deathroll/pictures/healer.png")
+        tankimg = ImageTk.PhotoImage(file = "C:/deathroll/pictures/tank.png")
+        rogueimg = ImageTk.PhotoImage(file = "C:/deathroll/pictures/rogue.png")
+        archerimg = ImageTk.PhotoImage(file = "C:/deathroll/pictures/archer.png")
+        healerimg = ImageTk.PhotoImage(file = "C:/deathroll/pictures/healer.png")
 
 
         tanklbl = Label(self, image = tankimg)
         tanklbl.image = tankimg
-        tanklbl.place(x = 125, y = 170)
+        tanklbl.place(x = 50, y = 150)
 
         roguelbl = Label(self, image = rogueimg)
         roguelbl.image = rogueimg
-        roguelbl.place(x = 325, y = 170)
+        roguelbl.place(x = 50, y = 400)
 
         archerlbl = Label(self, image = archerimg)
         archerlbl.image = archerimg
-        archerlbl.place(x = 525, y = 170)
+        archerlbl.place(x = 800, y = 150)
 
         healerlbl = Label(self, image = healerimg)
         healerlbl.image = healerimg
-        healerlbl.place(x = 725, y = 170)
+        healerlbl.place(x = 800, y = 400)
+
 
         self._tankname = Label(self, text = 'The Tank', width = 20, font = ("Helvetica", 11, 'bold'))
-        self._tankname.place(x = 105, y = 325)
+        self._tankname.place(x = 35, y = 300)
 
         self._roguename = Label(self, text = 'The Rogue', width = 20, font = ("Helvetica", 11, 'bold'))
-        self._roguename.place(x = 305, y = 325)
+        self._roguename.place(x = 35, y = 550)
 
         self._archername = Label(self, text = 'The Archer', width = 20, font = ("Helvetica", 11, 'bold'))
-        self._archername.place(x = 505, y = 325)
+        self._archername.place(x = 781, y = 300)
 
         self._healername = Label(self, text = 'The Healer', width = 20, font = ("Helvetica", 11, 'bold'))
-        self._healername.place(x = 705, y = 325)
+        self._healername.place(x = 781, y = 550)
+
+        self._p1Name = Label(self, text = 'Player 1:', width = 10, font = ("Helvetica", 11, 'bold'))
+        self._p1Name.place(x = 365, y = 200)
+        
+        self._p2Name = Label(self, text = 'Player 2:', width = 10, font = ("Helvetica", 11, 'bold'))
+        self._p2Name.place(x = 365, y = 250)
+
+        self._p3Name = Label(self, text = 'Player 3:', width = 10, font = ("Helvetica", 11, 'bold'))
+        self._p3Name.place(x = 365, y = 300)
+
+        self._p4Name = Label(self, text = 'Player 4:', width = 10, font = ("Helvetica", 11, 'bold'))
+        self._p4Name.place(x = 365, y = 350)
 
         self._entryTank = Entry(self, width = 25, textvar = controller.tank)
-        self._entryTank.place(x = 125, y = 350)
+        self._entryTank.place(x = 470, y = 200)
 
         self._entryRogue = Entry(self, width = 25, textvar = controller.rogue)
-        self._entryRogue.place(x = 325, y = 350)
+        self._entryRogue.place(x = 470, y = 250)
         
         self._entryArcher = Entry(self, width = 25, textvar = controller.archer)
-        self._entryArcher.place(x = 525, y = 350)
+        self._entryArcher.place(x = 470, y = 300)
         
         self._entryHealer = Entry(self, width = 25, textvar = controller.healer)
-        self._entryHealer.place(x = 725, y = 350)
+        self._entryHealer.place(x = 470, y = 350)
 
 
-        rockimg = ImageTk.PhotoImage(file = "C:/Users/cjlor/python/deathroll/pictures/letsrock.png")
+        rockimg = ImageTk.PhotoImage(file = "C:/deathroll/pictures/letsrock.png")
         rock = Button(self, image = rockimg, command = lambda: infoSet())
         rock.image = rockimg
         rock.place(x = 380, y = 400)
@@ -217,10 +279,10 @@ class MainGame(Frame):
         
         self._mana = [1, 1, 1, 1]
 
-        tankimg = ImageTk.PhotoImage(file = "C:/Users/cjlor/python/deathroll/pictures/tank.png")
-        rogueimg = ImageTk.PhotoImage(file = "C:/Users/cjlor/python/deathroll/pictures/rogue.png")
-        archerimg = ImageTk.PhotoImage(file = "C:/Users/cjlor/python/deathroll/pictures/archer.png")
-        healerimg = ImageTk.PhotoImage(file = "C:/Users/cjlor/python/deathroll/pictures/healer.png")
+        tankimg = ImageTk.PhotoImage(file = "C:/deathroll/pictures/tank.png")
+        rogueimg = ImageTk.PhotoImage(file = "C:/deathroll/pictures/rogue.png")
+        archerimg = ImageTk.PhotoImage(file = "C:/deathroll/pictures/archer.png")
+        healerimg = ImageTk.PhotoImage(file = "C:/deathroll/pictures/healer.png")
 
         tanklbl = Label(self, image = tankimg)
         tanklbl.image = tankimg
@@ -253,7 +315,7 @@ class MainGame(Frame):
         
         self._turn = 0
         self._max_roll = 10000
-        logoimg = ImageTk.PhotoImage(file = "C:/Users/cjlor/python/deathroll/pictures/logo.png") 
+        logoimg = ImageTk.PhotoImage(file = "C:/deathroll/pictures/logo.png") 
         logo = Label(self, image = logoimg)
         logo.image = logoimg
         logo.pack()
@@ -268,7 +330,7 @@ class MainGame(Frame):
         self.rng.pack(anchor = CENTER)
 
 
-        self.startimg = ImageTk.PhotoImage(file = "C:/Users/cjlor/python/deathroll/pictures/charge.png")
+        self.startimg = ImageTk.PhotoImage(file = "C:/deathroll/pictures/charge.png")
         self.start = Button(self, image = self.startimg, command = lambda: self.playerTurn(parent, controller))
         self.start.image = self.startimg
         self.start.place(x = 392, y = 400)
@@ -280,22 +342,32 @@ class MainGame(Frame):
             del self.gif
             parent.after(1000, self.deathRoll(parent, controller))
 
-        def skill(number):
+        def skillSound(number):
+            if number == 0:
+                controller.tankmusic.play()
+            elif number == 1:
+                controller.roguemusic.play()
+            elif number == 2:
+                controller.archermusic.play()
+            elif number == 3:
+                controller.healermusic.play()
+            parent.after(1000, skill(number))
 
+        def skill(number):
             if number == 0: #tank
-                self.nSkillimg = ImageTk.PhotoImage(file = "C:/Users/cjlor/python/deathroll/pictures/block.png") #skill frame
+                self.nSkillimg = ImageTk.PhotoImage(file = "C:/deathroll/pictures/block.png") #skill frame
                 self.nSkill = Label(self, image = self.nSkillimg)
                 self.nSkill.image = self.nSkillimg
                 self.nSkill.place(x = 392, y = 275)
                 self._mana[number] = self._mana[number] - 1
                 if self._turn < 3:
                     self._turn = self._turn + 1
-                    self.startimg = ImageTk.PhotoImage(file = "C:/Users/cjlor/python/deathroll/pictures/endturn.png")
+                    self.startimg = ImageTk.PhotoImage(file = "C:/deathroll/pictures/endturn.png")
                     self.start.image = self.startimg
                     self.start.configure(image = self.startimg, command = lambda: self.playerTurn(parent, controller))
                 else:
                     self._turn = 0
-                    self.startimg = ImageTk.PhotoImage(file = "C:/Users/cjlor/python/deathroll/pictures/endturn.png")
+                    self.startimg = ImageTk.PhotoImage(file = "C:/deathroll/pictures/endturn.png")
                     self.start.image = self.startimg
                     self.start.configure(image = self.startimg, command = lambda: self.playerTurn(parent, controller))
 
@@ -306,33 +378,35 @@ class MainGame(Frame):
                 skill(number)
 
             elif number == 2: #archer
-                self.nSkillimg = ImageTk.PhotoImage(file = "C:/Users/cjlor/python/deathroll/pictures/misdirect.png") #skill frame
+                self.nSkillimg = ImageTk.PhotoImage(file = "C:/deathroll/pictures/misdirect.png") #skill frame
                 self.nSkill = Label(self, image = self.nSkillimg)
                 self.nSkill.image = self.nSkillimg
                 self.nSkill.place(x = 392, y = 275)
                 self._mana[number] = self._mana[number] - 1
 
                 self._turn = choice([i for i in range(0,3) if i != 2])
-                self.startimg = ImageTk.PhotoImage(file = "C:/Users/cjlor/python/deathroll/pictures/endturn.png")
+                self.startimg = ImageTk.PhotoImage(file = "C:/deathroll/pictures/endturn.png")
                 self.start.image = self.startimg
                 self.start.configure(image = self.startimg, command = lambda: self.playerTurn(parent, controller))
 
             elif number == 3: #healer
-                self.nSkillimg = ImageTk.PhotoImage(file = "C:/Users/cjlor/python/deathroll/pictures/heal.png") #skill frame
+                self.nSkillimg = ImageTk.PhotoImage(file = "C:/deathroll/pictures/heal.png") #skill frame
                 self.nSkill = Label(self, image = self.nSkillimg)
                 self.nSkill.image = self.nSkillimg
                 self.nSkill.place(x = 392, y = 275)
                 self._max_roll = self._max_roll + 2000
+                self._dice = randint(1, self._max_roll)
+                self._max_roll = self._dice
                 self._mana[number] = self._mana[number] - 1
 
                 if self._turn < 3:
                     self._turn = self._turn + 1
-                    self.startimg = ImageTk.PhotoImage(file = "C:/Users/cjlor/python/deathroll/pictures/endturn.png")
+                    self.startimg = ImageTk.PhotoImage(file = "C:/deathroll/pictures/endturn.png")
                     self.start.image = self.startimg
                     self.start.configure(image = self.startimg, command = lambda: self.playerTurn(parent, controller))
                 else:
                     self._turn = 0
-                    self.startimg = ImageTk.PhotoImage(file = "C:/Users/cjlor/python/deathroll/pictures/endturn.png")
+                    self.startimg = ImageTk.PhotoImage(file = "C:/deathroll/pictures/endturn.png")
                     self.start.image = self.startimg
                     self.start.configure(image = self.startimg, command = lambda: self.playerTurn(parent, controller))
 
@@ -343,20 +417,20 @@ class MainGame(Frame):
         self.start.image = self.startimg
 
         if self._mana[self._turn] == 0:
-            self.skillimg = ImageTk.PhotoImage(file = "C:/Users/cjlor/python/deathroll/pictures/used.png")
+            self.skillimg = ImageTk.PhotoImage(file = "C:/deathroll/pictures/used.png")
             self.skill = Label(self, image = self.skillimg)
             self.skill.image = self.skillimg
             self.skill.place(x = 392, y = 275)
         else:
-            self.skillimg = ImageTk.PhotoImage(file = "C:/Users/cjlor/python/deathroll/pictures/skill.png")
-            self.skill = Button(self, image = self.skillimg, command = lambda: skill(self._turn))
+            self.skillimg = ImageTk.PhotoImage(file = "C:/deathroll/pictures/skill.png")
+            self.skill = Button(self, image = self.skillimg, command = lambda: skillSound(self._turn))
             self.skill.image = self.skillimg
             self.skill.place(x = 392, y = 275)
 
-        self.gif = gifplay(self.rng,'C:/Users/cjlor/python/deathroll/pictures/rng.gif', 0.05)
+        self.gif = gifplay(self.rng,'C:/deathroll/pictures/rng.gif', 0.05)
         self.gif.play()
 
-        self.startimg = ImageTk.PhotoImage(file = "C:/Users/cjlor/python/deathroll/pictures/roll.png")
+        self.startimg = ImageTk.PhotoImage(file = "C:/deathroll/pictures/roll.png")
         self.start.image = self.startimg
         self.start.configure(image = self.startimg, command = lambda: process(parent, controller))
     
@@ -368,25 +442,25 @@ class MainGame(Frame):
         self.rng.pack(anchor = CENTER)
         self._max_roll = self._dice
 
-        self.skillimg = ImageTk.PhotoImage(file = "C:/Users/cjlor/python/deathroll/pictures/used.png")
+        self.skillimg = ImageTk.PhotoImage(file = "C:/deathroll/pictures/used.png")
         self.skill = Label(self, image = self.skillimg)
         self.skill.image = self.skillimg
         self.skill.place(x = 392, y = 275)
 
         if self._max_roll == 1:
             self._lblTurn.configure(text = controller.players[self._turn] + " is Dead!")
-            self.startimg = ImageTk.PhotoImage(file = "C:/Users/cjlor/python/deathroll/pictures/endgame.png")
+            self.startimg = ImageTk.PhotoImage(file = "C:/deathroll/pictures/endgame.png")
             self.start.image = self.startimg
             self.start.configure(image = self.startimg, command = lambda: controller.last_will_screen(parent, self._turn))
         else:
             if self._turn < 3:
                 self._turn = self._turn + 1
-                self.startimg = ImageTk.PhotoImage(file = "C:/Users/cjlor/python/deathroll/pictures/endturn.png")
+                self.startimg = ImageTk.PhotoImage(file = "C:/deathroll/pictures/endturn.png")
                 self.start.image = self.startimg
                 self.start.configure(image = self.startimg, command = lambda: self.playerTurn(parent, controller))
             else:
                 self._turn = 0
-                self.startimg = ImageTk.PhotoImage(file = "C:/Users/cjlor/python/deathroll/pictures/endturn.png")
+                self.startimg = ImageTk.PhotoImage(file = "C:/deathroll/pictures/endturn.png")
                 self.start.image = self.startimg
                 self.start.configure(image = self.startimg, command = lambda: self.playerTurn(parent, controller))
 
@@ -394,32 +468,32 @@ class PostGame(Frame):
     def __init__(self, parent, controller, player):
         Frame.__init__(self, parent)
 
-        mainimg = ImageTk.PhotoImage(file = "C:/Users/cjlor/python/deathroll/pictures/end.png") 
+        mainimg = ImageTk.PhotoImage(file = "C:/deathroll/pictures/end.png") 
         mainlbl = Label(self, image = mainimg)
         mainlbl.image = mainimg
         mainlbl.place(x = 0, y = 0)
 
         dielbl = Label(self, bg = 'black')
-        dielbl.place(x = 425, y = 350)
+        dielbl.place(x = 425, y = 250)
 
         if player == 0:
-            dieimg = ImageTk.PhotoImage(file = "C:/Users/cjlor/python/deathroll/pictures/tank.png")
+            dieimg = ImageTk.PhotoImage(file = "C:/deathroll/pictures/tank.png")
             dielbl.image = dieimg
             dielbl.configure(image = dieimg)
         elif player == 1:
-            dieimg = ImageTk.PhotoImage(file = "C:/Users/cjlor/python/deathroll/pictures/rogue.png")
+            dieimg = ImageTk.PhotoImage(file = "C:/deathroll/pictures/rogue.png")
             dielbl.image = dieimg
             dielbl.configure(image = dieimg)
         elif player == 2:
-            dieimg = ImageTk.PhotoImage(file = "C:/Users/cjlor/python/deathroll/pictures/archer.png")
+            dieimg = ImageTk.PhotoImage(file = "C:/deathroll/pictures/archer.png")
             dielbl.image = dieimg
             dielbl.configure(image = dieimg)
         elif player == 3:
-            dieimg = ImageTk.PhotoImage(file = "C:/Users/cjlor/python/deathroll/pictures/healer.png")
+            dieimg = ImageTk.PhotoImage(file = "C:/deathroll/pictures/healer.png")
             dielbl.image = dieimg
             dielbl.configure(image = dieimg)
 
-        conn = sqlite3.connect("C:/Users/cjlor/python/deathroll/components/players.db")
+        conn = sqlite3.connect("C:/deathroll/components/players.db")
         c = conn.cursor()
 
         money = 0
@@ -441,7 +515,10 @@ class PostGame(Frame):
 
         conn.close()
 
-        quitimg = ImageTk.PhotoImage(file = "C:/Users/cjlor/python/deathroll/pictures/quit.png")
+        award = Label(self, text = 'Surviving players are awarded ' + str(money) + ' points.', width = 80, font = ("Helvetica", 16, 'bold'), fg = 'red', bg = 'black')
+        award.place(x = 0, y = 450)
+
+        quitimg = ImageTk.PhotoImage(file = "C:/deathroll/pictures/quit.png")
         quitButton = Button(self, image = quitimg, bg = 'black', command = lambda: exit())
         quitButton.image = quitimg
         quitButton.place(x = 385, y = 550)
@@ -452,7 +529,7 @@ class Bank(Tk):
         def infoSet():
             self.pName = self.name.get()
             self.pMoney = self.money.get()
-            conn = sqlite3.connect("C:/Users/cjlor/python/deathroll/components/players.db")
+            conn = sqlite3.connect("C:/deathroll/components/players.db")
             c = conn.cursor()
             gate = False
 
@@ -494,7 +571,7 @@ class Bank(Tk):
         reg.grid_columnconfigure(0, weight = 1)
 
 
-        logoimg = ImageTk.PhotoImage(file = "C:/Users/cjlor/python/deathroll/pictures/logo.png") 
+        logoimg = ImageTk.PhotoImage(file = "C:/deathroll/pictures/logo.png") 
         logo = Label(reg, image = logoimg)
         logo.image = logoimg
         logo.pack()
@@ -511,12 +588,12 @@ class Bank(Tk):
         entryMoney = Entry(reg, width = 30, textvar = self.money)
         entryMoney.place(x = 200, y = 190)
 
-        loginimg = ImageTk.PhotoImage(file = "C:/Users/cjlor/python/deathroll/pictures/bet.png")
+        loginimg = ImageTk.PhotoImage(file = "C:/deathroll/pictures/bet.png")
         login = Button(reg, image = loginimg, command = lambda: infoSet())
         login.image = loginimg
         login.place(x = 130, y = 250)
 
-        bquitimg = ImageTk.PhotoImage(file = "C:/Users/cjlor/python/deathroll/pictures/bquit.png")
+        bquitimg = ImageTk.PhotoImage(file = "C:/deathroll/pictures/bquit.png")
         rquit = Button(reg, image = bquitimg, command = lambda: reg.destroy())
         rquit.image = bquitimg
         rquit.place(x = 130, y = 400)
